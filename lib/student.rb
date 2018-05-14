@@ -2,19 +2,40 @@ class Student
   attr_accessor :id, :name, :grade
 
   def self.new_from_db(row)
-    stu = new()
-    stu.id = row[0]
-    stu.name = row[1]
-    stu.grade = row[2]
-    stu
+    # create a new Student object given a row from the database
+    student = self.new
+    student.id = row[0]
+    student.name = row[1]
+    student.grade = row[2]
+    student
   end
 
   def self.all
-    DB[:conn].execute("select * from students").map { |row| Student.new_from_db(row) }
+    # retrieve all the rows from the "Students" database
+    # remember each row should be a new instance of the Student class
+    sql = <<-SQL
+      SELECT *
+      FROM students
+    SQL
+
+    DB[:conn].execute(sql).map do |row|
+      self.new_from_db(row)
+    end
   end
 
   def self.find_by_name(name)
-    DB[:conn].prepare("select * from students where name = ? limit 1").execute([name]).each { |row| return Student.new_from_db(row) }
+    # find the student in the database given a name
+    # return a new instance of the Student class
+    sql = <<-SQL
+      SELECT *
+      FROM students
+      WHERE name = ?
+      LIMIT 1
+    SQL
+
+    DB[:conn].execute(sql,name).map do |row|
+      self.new_from_db(row)
+    end.first
   end
 
   def save
@@ -40,6 +61,7 @@ class Student
 
   def self.drop_table
     sql = "DROP TABLE IF EXISTS students"
+
     DB[:conn].execute(sql)
   end
 
